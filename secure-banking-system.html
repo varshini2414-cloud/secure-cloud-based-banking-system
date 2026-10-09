@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeBank India · Cloud-Based Banking System With Dynamic Transaction Risk Scoring</title>
+  <meta name="description" content="A secure cloud-based banking solution that analyzes transactions in real time, assigns 6-factor risk scores based on user activity and transaction patterns, and protects financial assets with AWS encryption." />
+  <meta name="author" content="Varshini" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background-color: #020617;
+      color: #f8fafc;
+    }
+    input[type=range] {
+      accent-color: #f59e0b;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- ========================================== -->
+  <!-- NAVIGATION HEADER -->
+  <!-- ========================================== -->
+  <header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/90">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="#top" onclick="switchTab('sandbox'); return false;" class="text-base sm:text-lg font-bold tracking-tight text-white whitespace-nowrap">
+          SafeBank India
+        </a>
+        <span class="hidden xl:inline-block text-[11px] font-medium text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">
+          AWS ap-south-1 (Mumbai) · INR (₹)
+        </span>
+      </div>
+
+      <!-- Main Navigation Tabs -->
+      <nav aria-label="Workspace Navigation" class="hidden lg:flex items-center gap-5 text-sm font-medium">
+        <button id="tab-btn-sandbox" onclick="switchTab('sandbox')" class="tab-btn py-5 border-b-2 border-amber-500 text-white font-semibold transition-colors text-xs xl:text-sm cursor-pointer">
+          Payment Safety Check
+        </button>
+        <button id="tab-btn-directory" onclick="switchTab('directory')" class="tab-btn py-5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors text-xs xl:text-sm cursor-pointer">
+          Customer Accounts
+        </button>
+        <button id="tab-btn-architecture" onclick="switchTab('architecture')" class="tab-btn py-5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors text-xs xl:text-sm cursor-pointer">
+          How Security Works
+        </button>
+        <button id="tab-btn-ledger" onclick="switchTab('ledger')" class="tab-btn py-5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors text-xs xl:text-sm cursor-pointer">
+          Transaction History
+        </button>
+        <button id="tab-btn-cloudwatch" onclick="switchTab('cloudwatch')" class="tab-btn py-5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors text-xs xl:text-sm cursor-pointer">
+          Live Security Monitor
+        </button>
+        <button id="tab-btn-advisor" onclick="switchTab('advisor')" class="tab-btn py-5 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors text-xs xl:text-sm cursor-pointer">
+          Smart Safety Settings
+        </button>
+      </nav>
+
+      <!-- Right Actions: Policy Mode & Simulator & Download -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <div role="group" aria-label="Protection Level" class="hidden sm:flex items-center bg-slate-900 p-1 rounded-lg border border-slate-800">
+          <button id="mode-btn-dynamic" onclick="setPolicyMode('dynamic_adaptive')" title="Dynamic 6-factor risk analysis" class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors bg-amber-500 text-slate-950">
+            Smart Safety
+          </button>
+          <button id="mode-btn-zerotrust" onclick="setPolicyMode('strict_zero_trust')" title="Strict zero trust verification" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors text-slate-400 hover:text-slate-200">
+            Extra Strict
+          </button>
+          <button id="mode-btn-fixed" onclick="setPolicyMode('fixed_legacy')" title="Password only (Weak)" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors text-slate-400 hover:text-slate-200">
+            Old Password Only
+          </button>
+        </div>
+
+        <button onclick="openThreatModal()" class="px-3 py-2 text-xs font-semibold text-slate-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors whitespace-nowrap cursor-pointer">
+          Try Scam Scenarios
+        </button>
+
+        <button onclick="downloadSelfAsHtml()" title="Download complete standalone HTML project file" class="px-3 py-2 text-xs font-semibold text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+          <span>📥</span>
+          <span>Download .HTML</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Nav Bar -->
+    <div class="flex lg:hidden items-center gap-2 px-4 py-2 border-t border-slate-900 overflow-x-auto">
+      <button onclick="switchTab('sandbox')" class="mob-tab-btn px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-800 text-amber-400 whitespace-nowrap">Safety Check</button>
+      <button onclick="switchTab('directory')" class="mob-tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 whitespace-nowrap">Accounts</button>
+      <button onclick="switchTab('architecture')" class="mob-tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 whitespace-nowrap">Architecture</button>
+      <button onclick="switchTab('ledger')" class="mob-tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 whitespace-nowrap">History</button>
+      <button onclick="switchTab('cloudwatch')" class="mob-tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 whitespace-nowrap">Live Monitor</button>
+      <button onclick="switchTab('advisor')" class="mob-tab-btn px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 whitespace-nowrap">Policy Tuning</button>
+    </div>
+  </header>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none max-w-md w-full p-4 rounded-xl shadow-2xl border flex items-start gap-3 bg-slate-900 text-white border-slate-700">
+    <div id="toast-icon" class="text-xl shrink-0 mt-0.5">✅</div>
+    <div class="flex-1 min-w-0">
+      <div id="toast-title" class="font-bold text-sm text-white">Notification</div>
+      <div id="toast-msg" class="text-xs text-slate-300 mt-0.5">Details here...</div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- ======================================================== -->
+    <!-- VIEW 1: PAYMENT SAFETY CHECK (SANDBOX)                   -->
+    <!-- ======================================================== -->
+    <div id="view-sandbox" class="tab-view space-y-6">
+      
+      <!-- Customer Profile Selector Strip -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 sm:p-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h2 class="text-sm font-bold text-white tracking-wide uppercase">Active Customer Profile</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Select a customer to evaluate outgoing transfers against their past spending habits</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <label for="customer-select" class="text-xs text-slate-400 font-medium">Switch Customer:</label>
+            <select id="customer-select" onchange="handleSelectCustomer(this.value)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+              <!-- Rendered via JS -->
+            </select>
+          </div>
+        </div>
+
+        <div id="customer-card-strip" class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- Threat Scenario Presets Strip -->
+      <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-400 font-bold text-xs uppercase tracking-wider">⚡ Quick Scenario Presets</span>
+            <span class="text-[11px] text-slate-400">Click any preset to simulate real-world attacks vs safe payments</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5" id="presets-container">
+          <!-- Presets rendered via JS -->
+        </div>
+      </section>
+
+      <!-- 12-Column Grid: Transaction Input Form + Real-time Risk Assessment -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left 7 Columns: Transaction & 6 Safety Factors -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>Step 1: Payment Details (Transfer in INR · ₹)</span>
+              </h3>
+              <span class="text-[11px] font-mono text-slate-400">AWS ap-south-1 Mumbai</span>
+            </div>
+
+            <!-- Amount Input + Quick Chips -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <label for="txn-amount" class="font-semibold text-slate-200">Transfer Amount (Indian Rupees):</label>
+                <span id="amount-ratio-label" class="text-amber-400 font-mono font-medium">Normal amount</span>
+              </div>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                <input type="number" id="txn-amount" oninput="handleAmountChange(this.value)" min="1" max="10000000" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-4 py-2.5 text-base font-semibold text-white focus:outline-none focus:border-amber-500 font-mono" placeholder="Enter amount in ₹" />
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span class="text-[11px] text-slate-500">Quick chips:</span>
+                <button type="button" onclick="setQuickAmount(500)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">₹500</button>
+                <button type="button" onclick="setQuickAmount(2500)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">₹2,500</button>
+                <button type="button" onclick="setQuickAmount(15000)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">₹15,000</button>
+                <button type="button" onclick="setQuickAmount(50000)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">₹50,000</button>
+                <button type="button" onclick="setQuickAmount(200000)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">₹2,00,000</button>
+                <button type="button" onclick="setQuickAmount(500000)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">₹5,00,000</button>
+              </div>
+            </div>
+
+            <!-- Beneficiary Name & Account -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-1">
+                <label for="txn-beneficiary-name" class="text-xs font-semibold text-slate-200">Beneficiary (Person / Company Name):</label>
+                <input type="text" id="txn-beneficiary-name" oninput="handleBeneficiaryNameChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500" placeholder="e.g. Tata Power Mumbai" />
+              </div>
+              <div class="space-y-1">
+                <label for="txn-beneficiary-iban" class="text-xs font-semibold text-slate-200">Beneficiary IFSC / Account / UPI ID:</label>
+                <input type="text" id="txn-beneficiary-iban" oninput="handleBeneficiaryIbanChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono" placeholder="e.g. HDFC0001892 · 9182740192" />
+              </div>
+            </div>
+
+            <!-- Transfer Channel -->
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-200">Transfer Channel:</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button type="button" onclick="setChannel('Mobile Banking Enclave')" id="chan-mobile" class="chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-800 border-amber-500 text-white cursor-pointer">Mobile App (FaceID)</button>
+                <button type="button" onclick="setChannel('UPI QuickPay 2.0')" id="chan-upi" class="chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-950 border-slate-800 text-slate-400 hover:text-white cursor-pointer">UPI QuickPay</button>
+                <button type="button" onclick="setChannel('Web Commercial Portal')" id="chan-web" class="chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-950 border-slate-800 text-slate-400 hover:text-white cursor-pointer">Web NetBanking</button>
+                <button type="button" onclick="setChannel('OpenBanking REST API')" id="chan-api" class="chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-950 border-slate-800 text-slate-400 hover:text-white cursor-pointer">REST API / Automated</button>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-4">
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">Step 2: 6 Dynamic Safety Signals</h4>
+              
+              <div class="space-y-4 text-xs">
+                <!-- Factor 2: Device Trust -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-200">Signal 2: Phone, Laptop, or Browser Device Trust</span>
+                    <span id="score-badge-device" class="font-mono text-emerald-400">Score: 5/100</span>
+                  </div>
+                  <select id="input-device-trust" onchange="handleFactorChange('deviceTrust', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+                    <option value="trusted_biometric">Registered Phone / Laptop (Enrolled Biometric Hardware)</option>
+                    <option value="known_browser">Recognized Laptop Browser (Previously Verified via OTP)</option>
+                    <option value="unrecognized_device">Brand-New Device or Unknown Browser (First-time Login)</option>
+                    <option value="emulator_tor_proxy">Hacker Tool / Android Emulator / Tor Hidden Network</option>
+                  </select>
+                </div>
+
+                <!-- Factor 3: Beneficiary Trust -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-200">Signal 3: Recipient History &amp; Trust Level</span>
+                    <span id="score-badge-beneficiary" class="font-mono text-emerald-400">Score: 10/100</span>
+                  </div>
+                  <select id="input-beneficiary-status" onchange="handleFactorChange('beneficiaryStatus', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+                    <option value="existing_domestic">Trusted Regular Payee (Multiple Past Successful Transfers)</option>
+                    <option value="newly_added_unverified">Newly Added Payee (Added within last 24 Hours)</option>
+                    <option value="high_risk_offshore">Suspicious Offshore Account or Flagged Forex Mule Wallet</option>
+                  </select>
+                </div>
+
+                <!-- Factor 4: Location -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-200">Signal 4: Geographic Location &amp; Travel Speed</span>
+                    <span id="score-badge-location" class="font-mono text-emerald-400">Score: 5/100</span>
+                  </div>
+                  <select id="input-location-status" onchange="handleFactorChange('locationStatus', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+                    <option value="home_geofence">Home City &amp; Trusted Wi-Fi (Bengaluru / Mumbai / Delhi)</option>
+                    <option value="domestic_regional">Domestic Indian Travel (e.g. Pune, Chennai, Hyderabad)</option>
+                    <option value="foreign_unannounced">Foreign Country (Overseas without Travel Notice)</option>
+                    <option value="impossible_travel_vpn">Impossible Fast Travel (Across Continent in 15 Minutes)</option>
+                  </select>
+                </div>
+
+                <!-- Factor 5: Transfer Velocity -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-200">Signal 5: Transfer Speed &amp; Frequency</span>
+                    <span id="score-badge-frequency" class="font-mono text-emerald-400">Score: 5/100</span>
+                  </div>
+                  <select id="input-frequency-level" onchange="handleFactorChange('frequencyLevel', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+                    <option value="normal_1_per_hr">Normal Pace (1 transfer per hour)</option>
+                    <option value="elevated_3_per_15m">Elevated Activity (3 transfers in 15 minutes)</option>
+                    <option value="rapid_burst_6_per_5m">Rapid Burst (6 back-to-back payments in 5 minutes)</option>
+                    <option value="automated_structuring_12_per_m">Robotic Account Drain (Multiple transfers every second)</option>
+                  </select>
+                </div>
+
+                <!-- Factor 6: Behavioral Anomaly -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-200">Signal 6: Time of Day &amp; Pasted Account Numbers</span>
+                    <span id="score-badge-anomaly" class="font-mono text-emerald-400">Score: 5/100</span>
+                  </div>
+                  <select id="input-anomaly-level" onchange="handleFactorChange('anomalyLevel', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+                    <option value="normal_hygiene">Normal Daytime Hygiene &amp; Manual Keyed Input</option>
+                    <option value="off_hours_3am">Unusual Middle-of-the-Night Hour (3:00 AM – 4:30 AM)</option>
+                    <option value="recent_credential_reset">Transfer immediately following a password reset</option>
+                    <option value="session_hijack_paste_pattern">Automated Script Paste Pattern &amp; Keystroke Inconsistency</option>
+                  </select>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 5 Columns: Dynamic Risk Score & Instant Decision Engine -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-5 sticky top-20">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-bold text-white">Dynamic Risk Evaluation Result</h3>
+              <span id="policy-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80">SMART SAFETY</span>
+            </div>
+
+            <!-- Risk Score Ring Gauge -->
+            <div class="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <div class="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path id="gauge-circle" class="text-emerald-400 transition-all duration-500" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span id="gauge-score" class="text-2xl font-bold font-mono text-white">0</span>
+                  <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Risk Score</span>
+                </div>
+              </div>
+
+              <div class="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+                <div id="decision-title" class="text-base font-bold text-emerald-400">Safe (Instant Approval)</div>
+                <p id="decision-reason" class="text-xs text-slate-300 leading-relaxed">
+                  All 6 safety signals match customer's verified history. Payment can proceed instantly.
+                </p>
+                <div class="text-[11px] font-mono text-slate-400 pt-1">
+                  Evaluation Latency: <span class="text-amber-400 font-semibold">18 ms</span> · AWS Lambda
+                </div>
+              </div>
+            </div>
+
+            <!-- Breakdown of 6 Factors Contribution -->
+            <div class="space-y-2 border-t border-slate-800 pt-3">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">6-Factor Risk Weight Breakdown</h4>
+              <div class="space-y-1.5 text-xs font-mono" id="factors-breakdown-list">
+                <!-- Rendered dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+              <button id="commit-btn" onclick="executeCurrentTransaction()" class="w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-colors shadow-lg shadow-emerald-500/10 cursor-pointer flex items-center justify-center gap-2">
+                <span>🔐</span>
+                <span id="commit-btn-text">Approve &amp; Encrypt into DynamoDB Vault</span>
+              </button>
+              
+              <div id="stepup-actions" class="hidden grid grid-cols-2 gap-2">
+                <button onclick="executeCurrentTransaction(true)" class="py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer">
+                  Simulate OTP Success (Approve)
+                </button>
+                <button onclick="simulateFailedMfa()" class="py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-colors cursor-pointer">
+                  Simulate Wrong OTP (Protect)
+                </button>
+              </div>
+
+              <button onclick="resetSandboxInputs()" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors cursor-pointer">
+                Reset to Default
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 2: CUSTOMER ACCOUNTS (COGNITO DIRECTORY)            -->
+    <!-- ======================================================== -->
+    <div id="view-directory" class="tab-view hidden space-y-6">
+      
+      <!-- KPI Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Total Enrolled Customers</div>
+          <div class="text-2xl font-bold font-mono text-white mt-1">6 Customers</div>
+          <div class="text-[11px] text-emerald-400 mt-1">100% Aadhaar / Biometric Enrolled</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Total Vault Deposits</div>
+          <div class="text-2xl font-bold font-mono text-white mt-1">₹37,85,650</div>
+          <div class="text-[11px] text-cyan-400 mt-1">Encrypted with AWS KMS CMK</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Active Verified Sessions</div>
+          <div class="text-2xl font-bold font-mono text-emerald-400 mt-1">6 Active</div>
+          <div class="text-[11px] text-slate-400 mt-1">Cognito User Pool IDP</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">AWS Region</div>
+          <div class="text-2xl font-bold font-mono text-amber-400 mt-1">ap-south-1</div>
+          <div class="text-[11px] text-slate-400 mt-1">Mumbai Datacenters</div>
+        </div>
+      </div>
+
+      <!-- Customer Directory Table -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Customer Account Directory (Amazon Cognito Sync)</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Manage bank customer accounts, registered biometric devices, and spending limits</p>
+          </div>
+          <input type="text" id="directory-search" oninput="filterDirectoryTable(this.value)" placeholder="Search by name, city, or account..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 w-full sm:w-64" />
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-4">Customer Name</th>
+                <th class="py-3 px-4">Account Number</th>
+                <th class="py-3 px-4">Account Tier</th>
+                <th class="py-3 px-4 text-right">Available Balance (₹)</th>
+                <th class="py-3 px-4 text-right">Daily Limit (₹)</th>
+                <th class="py-3 px-4">Home Location</th>
+                <th class="py-3 px-4">Registered Device</th>
+                <th class="py-3 px-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="directory-table-body" class="divide-y divide-slate-800/60 font-sans">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Account Detail Modal -->
+      <div id="account-detail-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 id="modal-acc-name" class="text-lg font-bold text-white">Customer Profile</h3>
+              <p id="modal-acc-tier" class="text-xs text-amber-400">Account Tier</p>
+            </div>
+            <button onclick="closeAccountModal()" class="text-slate-400 hover:text-white text-xl cursor-pointer">&times;</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-xs font-mono" id="modal-acc-details">
+            <!-- Details rendered via JS -->
+          </div>
+
+          <div class="pt-2 border-t border-slate-800 flex justify-end gap-3">
+            <button onclick="selectCustomerAndJump(currentInspectedCustomerId)" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer">
+              Send Payment in Sandbox
+            </button>
+            <button onclick="closeAccountModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs cursor-pointer">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 3: HOW SECURITY WORKS (AWS TOPOLOGY)                -->
+    <!-- ======================================================== -->
+    <div id="view-architecture" class="tab-view hidden space-y-6">
+      
+      <section class="bg-slate-900/90 border border-slate-800 rounded-xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Cloud Banking Architecture &amp; 7 Security Guards</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Click any security guard to see how it shields the bank in plain language</p>
+          </div>
+          <span class="text-xs font-mono text-cyan-400 bg-cyan-950/50 border border-cyan-800/60 px-2.5 py-1 rounded">
+            Region: AWS ap-south-1 (Mumbai)
+          </span>
+        </div>
+
+        <!-- Interactive Architecture Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6" id="guards-container">
+          <!-- 7 Security guards rendered via JS -->
+        </div>
+
+        <!-- Guard Deep Dive Inspector -->
+        <div id="guard-inspector" class="mt-6 p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h3 id="inspector-guard-title" class="text-sm font-bold text-amber-400">Select a Security Guard</h3>
+            <span id="inspector-guard-role" class="text-xs text-slate-400 font-mono">Role info</span>
+          </div>
+          <p id="inspector-guard-desc" class="text-xs text-slate-300 leading-relaxed">
+            Click any guard box above to inspect how it defends transactions against fraud.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">Speed / Latency</span>
+              <strong id="inspector-guard-latency" class="text-white font-mono">--</strong>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">Pricing Model</span>
+              <strong id="inspector-guard-pricing" class="text-white font-mono">--</strong>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">Active Protection Status</span>
+              <strong id="inspector-guard-status" class="text-emerald-400 font-mono">Operational</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 4: TRANSACTION HISTORY (DYNAMODB LEDGER)            -->
+    <!-- ======================================================== -->
+    <div id="view-ledger" class="tab-view hidden space-y-6">
+      
+      <!-- Ledger KPI Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Total Vault Transfers</div>
+          <div id="ledger-total-txns" class="text-2xl font-bold font-mono text-white mt-1">0</div>
+          <div class="text-[11px] text-emerald-400 mt-1">DynamoDB Encrypted Table</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Approved Volume (₹)</div>
+          <div id="ledger-approved-vol" class="text-2xl font-bold font-mono text-emerald-400 mt-1">₹0</div>
+          <div class="text-[11px] text-slate-400 mt-1">Clean verified transactions</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Blocked Scam Attempts (₹)</div>
+          <div id="ledger-blocked-vol" class="text-2xl font-bold font-mono text-rose-400 mt-1">₹0</div>
+          <div class="text-[11px] text-slate-400 mt-1">Customer money protected</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs text-slate-400">Encryption Standard</div>
+          <div class="text-2xl font-bold font-mono text-cyan-400 mt-1">AES-256</div>
+          <div class="text-[11px] text-slate-400 mt-1">AWS KMS Customer Master Key</div>
+        </div>
+      </div>
+
+      <!-- Filter Bar & Search -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <button onclick="setLedgerFilter('ALL')" id="filter-btn-all" class="filter-btn px-3 py-1 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 cursor-pointer">All Transfers</button>
+            <button onclick="setLedgerFilter('ALLOW')" id="filter-btn-allow" class="filter-btn px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Approved (Safe)</button>
+            <button onclick="setLedgerFilter('STEP_UP_REQUIRED')" id="filter-btn-stepup" class="filter-btn px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white cursor-pointer">1-Time OTP Verified</button>
+            <button onclick="setLedgerFilter('BLOCKED')" id="filter-btn-block" class="filter-btn px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Blocked Scams</button>
+          </div>
+          <input type="text" id="ledger-search" oninput="filterLedgerTable(this.value)" placeholder="Search Tx ID, customer, recipient..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 w-full sm:w-64" />
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-4">Transaction ID</th>
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Customer</th>
+                <th class="py-3 px-4">Recipient</th>
+                <th class="py-3 px-4 text-right">Amount (₹)</th>
+                <th class="py-3 px-4 text-center">Risk Score</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4">Security Reason</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-table-body" class="divide-y divide-slate-800/60 font-mono">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 5: LIVE SECURITY MONITOR (CLOUDWATCH)               -->
+    <!-- ======================================================== -->
+    <div id="view-cloudwatch" class="tab-view hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 rounded-xl p-5">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Amazon CloudWatch Live Telemetry Stream</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Real-time log events streamed across AWS Lambda, DynamoDB, Cognito, and KMS in Mumbai</p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button id="stream-pause-btn" onclick="toggleLogStreamPause()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 font-semibold cursor-pointer">
+            Pause Stream
+          </button>
+          <button onclick="clearCloudWatchLogs()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 font-semibold cursor-pointer">
+            Clear Logs
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left 8 Columns: Live Log Stream Terminal -->
+        <div class="lg:col-span-8 bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs overflow-hidden">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-[11px] text-slate-400 font-semibold">
+            <span>Log Events (/aws/lambda/aegis-risk-evaluator)</span>
+            <span id="log-count-indicator">Stream active</span>
+          </div>
+          <div id="logs-container" class="space-y-2 mt-3 max-h-[500px] overflow-y-auto pr-2">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Right 4 Columns: Incident Alerts Stream -->
+        <div class="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="text-rose-400">🚨</span>
+            <span>Security Incidents &amp; Alerts</span>
+          </h3>
+          <p class="text-xs text-slate-400">Automated SNS &amp; GuardDuty threat triggers</p>
+
+          <div id="alerts-container" class="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 6: SMART SAFETY SETTINGS (DYNAMIC POLICY TUNING)     -->
+    <!-- ======================================================== -->
+    <div id="view-advisor" class="tab-view hidden space-y-6">
+      
+      <section class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-white">Security Rules &amp; Dynamic Policy Tuning</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Customize the weight of each safety check, adjust thresholds, or run algorithmic policy optimization</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="runPolicyOptimization()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors cursor-pointer flex items-center gap-2">
+            <span>⚙️</span>
+            <span>Run Policy Optimization</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left 6 Columns: 6 Factor Sliders & Threshold Sliders -->
+        <div class="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-bold text-white">1. Safety Signal Weight Sliders (Total: 100%)</h3>
+            <button onclick="resetSlidersToDefault()" class="text-xs text-slate-400 hover:text-white underline cursor-pointer">Reset</button>
+          </div>
+
+          <div class="space-y-4 text-xs" id="weight-sliders-container">
+            <!-- 6 Sliders rendered via JS -->
+          </div>
+
+          <!-- Threshold Sliders -->
+          <div class="pt-4 border-t border-slate-800 space-y-4">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Score Boundaries (When to Approve, Challenge, or Block)</h4>
+            
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-emerald-400 font-semibold">Auto-Approval Cutoff (Safe Range):</span>
+                <span id="allow-threshold-val" class="font-mono text-white font-bold">0 to 34</span>
+              </div>
+              <input type="range" id="slider-allow" min="15" max="45" value="34" oninput="handleThresholdChange('allow', this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-amber-400 font-semibold">One-Time Code Cutoff (Step-Up Range):</span>
+                <span id="stepup-threshold-val" class="font-mono text-white font-bold">35 to 69 (70+ is Blocked)</span>
+              </div>
+              <input type="range" id="slider-stepup" min="50" max="85" value="69" oninput="handleThresholdChange('stepup', this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 6 Columns: Dynamic Optimization Advice & Rationale -->
+        <div class="lg:col-span-6 space-y-5">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span class="text-[11px] font-mono text-amber-400">Optimizer: SafeBank Dynamic Risk Policy Engine</span>
+                <h3 class="text-sm font-bold text-white mt-0.5">2. Dynamic Policy Optimization Advice</h3>
+              </div>
+              <div class="text-right text-xs font-mono">
+                <div class="text-emerald-400 font-bold">98.4% Scams Stopped</div>
+                <div class="text-slate-400">68.4% Fewer Annoyances</div>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-200 leading-relaxed" id="policy-summary-text">
+              We evaluated the recent payment patterns. Giving higher importance to recognized devices and past recipient trust stops scammers using stolen passwords, while keeping everyday bills fast and hassle-free.
+            </p>
+
+            <div class="p-3.5 rounded-lg bg-slate-950 border border-slate-800 text-xs space-y-1">
+              <span class="font-semibold text-cyan-400">Security &amp; Vault Protection Advice:</span>
+              <p class="text-slate-300 leading-relaxed">
+                For large transfers over ₹50,000, always ask for a fresh one-time security code. Keep all customer balances locked with bank-grade AES-256 digital keys.
+              </p>
+            </div>
+          </div>
+
+          <!-- Per-Factor Rationale -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2.5">3. Algorithmic Optimization Rationale</h4>
+            <div class="space-y-2 text-xs" id="policy-rationale-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- THREAT SCENARIO SIMULATOR MODAL                          -->
+  <!-- ======================================================== -->
+  <div id="threat-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-white">Compare Attack Scenarios: Old Bank vs. SafeBank</h3>
+          <p class="text-xs text-slate-400">See why old banks fail when a password is stolen, and how SafeBank stops the scam</p>
+        </div>
+        <button onclick="closeThreatModal()" class="text-slate-400 hover:text-white text-xl cursor-pointer">&times;</button>
+      </div>
+
+      <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1" id="threat-scenarios-modal-list">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="closeThreatModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs cursor-pointer">
+          Close Window
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clean Human Engineered Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950/70 py-5 mt-12 text-xs text-slate-500">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div>
+        SafeBank India · Cloud-Based Banking System With Dynamic Transaction Risk Scoring | Designed &amp; Developed by Varshini
+      </div>
+      <div class="flex flex-wrap items-center gap-2 text-slate-400">
+        <span>Amazon Cognito</span>
+        <span>·</span>
+        <span>Amazon API Gateway</span>
+        <span>·</span>
+        <span>AWS Lambda</span>
+        <span>·</span>
+        <span>Amazon DynamoDB</span>
+        <span>·</span>
+        <span>AWS KMS</span>
+        <span>·</span>
+        <span>AWS IAM</span>
+        <span>·</span>
+        <span>Amazon CloudWatch</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- APPLICATION ENGINE (VANILLA JS, NO BUILD REQUIRED)       -->
+  <!-- ======================================================== -->
+  <script>
+    /* =========================================================
+       DATA MODELS & STATE
+       ========================================================= */
+    const ACCOUNTS = [
+      {
+        id: 'ACC-9041',
+        holderName: 'Priya Sharma',
+        tier: 'Priority Savings Account',
+        accountNumberMasked: '****-****-8841',
+        balanceUsd: 485600.5,
+        avgTransactionUsd: 12500,
+        dailyLimitUsd: 100000,
+        homeLocation: 'Bengaluru, Karnataka',
+        registeredDevice: 'iPhone 16 Pro · FaceID Enclave',
+        cognitoSub: 'a84c91e0-3f2b-4d91-9b12-7748291048a1',
+        kmsKeyId: 'mrk-8841a9c02f8b41d39e71',
+        mfaEnrolled: 'Aadhaar OTP + Biometric Passkey',
+        sessionStatus: 'active_verified'
+      },
+      {
+        id: 'ACC-3108',
+        holderName: 'Rajesh Kumar',
+        tier: 'Corporate Current Account',
+        accountNumberMasked: '****-****-3108',
+        balanceUsd: 1875000.0,
+        avgTransactionUsd: 45000,
+        dailyLimitUsd: 500000,
+        homeLocation: 'Mumbai, Maharashtra',
+        registeredDevice: 'MacBook Pro M4 · TouchID Secure Enclave',
+        cognitoSub: 'c91f44b2-8a11-4c70-8e42-1190482310b2',
+        kmsKeyId: 'mrk-3108b7d91e4c49a28f04',
+        mfaEnrolled: 'Corporate FIDO2 Token + Mobile OTP',
+        sessionStatus: 'active_verified'
+      },
+      {
+        id: 'ACC-7724',
+        holderName: 'Dr. Ananya Iyer',
+        tier: 'Premier Wealth Account',
+        accountNumberMasked: '****-****-7724',
+        balanceUsd: 840250.75,
+        avgTransactionUsd: 18000,
+        dailyLimitUsd: 200000,
+        homeLocation: 'Chennai, Tamil Nadu',
+        registeredDevice: 'Pixel 9 Pro · Titan M2 Biometric',
+        cognitoSub: 'f32d18c4-5e90-4a12-b781-9938172635c3',
+        kmsKeyId: 'mrk-7724f5e19a3b48c19d22',
+        mfaEnrolled: 'UPI MPIN + Biometric Push',
+        sessionStatus: 'active_verified'
+      },
+      {
+        id: 'ACC-5519',
+        holderName: 'Vikramaditya Verma',
+        tier: 'Standard Savings Account',
+        accountNumberMasked: '****-****-5519',
+        balanceUsd: 165400.0,
+        avgTransactionUsd: 4200,
+        dailyLimitUsd: 50000,
+        homeLocation: 'New Delhi, Delhi',
+        registeredDevice: 'Samsung Galaxy S25 · Knox Vault',
+        cognitoSub: 'd19a77e6-2b44-4f08-9c33-4481920394d4',
+        kmsKeyId: 'mrk-5519c2a84d1e47b08e15',
+        mfaEnrolled: 'Bank Mobile App Passkey',
+        sessionStatus: 'active_verified'
+      },
+      {
+        id: 'ACC-2091',
+        holderName: 'Rohan Patel',
+        tier: 'Priority Savings Account',
+        accountNumberMasked: '****-****-2091',
+        balanceUsd: 312500.0,
+        avgTransactionUsd: 9800,
+        dailyLimitUsd: 150000,
+        homeLocation: 'Ahmedabad, Gujarat',
+        registeredDevice: 'OnePlus 13 · Biometric Sensor',
+        cognitoSub: 'b41e9981-12cd-44aa-99ff-1200491823a9',
+        kmsKeyId: 'mrk-2091c8a190ef45b20119',
+        mfaEnrolled: 'SMS OTP + Biometric',
+        sessionStatus: 'active_verified'
+      },
+      {
+        id: 'ACC-6640',
+        holderName: 'Neha Reddy',
+        tier: 'Young Professionals Salary Account',
+        accountNumberMasked: '****-****-6640',
+        balanceUsd: 106900.0,
+        avgTransactionUsd: 3500,
+        dailyLimitUsd: 40000,
+        homeLocation: 'Hyderabad, Telangana',
+        registeredDevice: 'iPhone 15 · FaceID',
+        cognitoSub: 'e77f0119-90dd-4211-a871-3341908271cc',
+        kmsKeyId: 'mrk-6640bb891e4a55c28e90',
+        mfaEnrolled: 'UPI MPIN + Biometric',
+        sessionStatus: 'active_verified'
+      }
+    ];
+
+    const SCENARIOS = [
+      {
+        id: 'SCEN-NORMAL',
+        name: '1. Normal Groceries via UPI (₹850)',
+        category: 'Safe & Normal',
+        amount: 850,
+        beneficiaryName: 'Blinkit Grocery Mart (Trusted)',
+        beneficiaryIban: 'YESB0000182 · blinkit@ybl',
+        beneficiaryStatus: 'existing_domestic',
+        deviceTrust: 'trusted_biometric',
+        locationStatus: 'home_geofence',
+        frequencyLevel: 'normal_1_per_hr',
+        anomalyLevel: 'normal_hygiene',
+        channel: 'Mobile Banking Enclave',
+        desc: 'Customer is at home, buying groceries from regular trusted merchant.'
+      },
+      {
+        id: 'SCEN-NEW-LAPTOP',
+        name: '2. New Laptop + New Contractor (₹45,000)',
+        category: 'Needs Quick Check',
+        amount: 45000,
+        beneficiaryName: 'Sharma Interior Works (New Contractor)',
+        beneficiaryIban: 'HDFC0001892 · 918274019283',
+        beneficiaryStatus: 'newly_added_unverified',
+        deviceTrust: 'unrecognized_device',
+        locationStatus: 'domestic_regional',
+        frequencyLevel: 'normal_1_per_hr',
+        anomalyLevel: 'normal_hygiene',
+        channel: 'Web Commercial Portal',
+        desc: 'New Windows laptop in another city sending ₹45,000 to new contractor.'
+      },
+      {
+        id: 'SCEN-TRAVEL',
+        name: '3. Late-Night Transfer from London (₹85,000)',
+        category: 'Needs Quick Check',
+        amount: 85000,
+        beneficiaryName: 'Nippon India Mutual Fund',
+        beneficiaryIban: 'SBIN0000412 · 004122918830',
+        beneficiaryStatus: 'existing_domestic',
+        deviceTrust: 'known_browser',
+        locationStatus: 'foreign_unannounced',
+        frequencyLevel: 'elevated_3_per_15m',
+        anomalyLevel: 'off_hours_3am',
+        channel: 'Web Commercial Portal',
+        desc: 'Transfer from London at 3:15 AM India time without travel notice.'
+      },
+      {
+        id: 'SCEN-HIJACK',
+        name: '4. Stolen Password Used Overseas (₹2,50,000)',
+        category: 'Dangerous Scam',
+        amount: 250000,
+        beneficiaryName: 'Global Apex Offshore Shell Holdings Ltd',
+        beneficiaryIban: 'CY17-0020-0128-0000-0012-0052-7600',
+        beneficiaryStatus: 'high_risk_offshore',
+        deviceTrust: 'emulator_tor_proxy',
+        locationStatus: 'impossible_travel_vpn',
+        frequencyLevel: 'rapid_burst_6_per_5m',
+        anomalyLevel: 'session_hijack_paste_pattern',
+        channel: 'OpenBanking REST API',
+        desc: 'Scammer stole netbanking login; transfer sent from Frankfurt 14m after home login.'
+      },
+      {
+        id: 'SCEN-DRAIN',
+        name: '5. Fast Money Drain After Password Reset (₹95,000)',
+        category: 'Dangerous Scam',
+        amount: 95000,
+        beneficiaryName: 'Suspicious Forex Crypto Bridge',
+        beneficiaryIban: 'EE38-2200-2210-2014-5685',
+        beneficiaryStatus: 'high_risk_offshore',
+        deviceTrust: 'unrecognized_device',
+        locationStatus: 'foreign_unannounced',
+        frequencyLevel: 'automated_structuring_12_per_m',
+        anomalyLevel: 'recent_credential_reset',
+        channel: 'OpenBanking REST API',
+        desc: 'Rapid transfers every few seconds right after password reset.'
+      }
+    ];
+
+    const GUARDS = [
+      {
+        id: 'waf',
+        num: '1',
+        name: 'Route 53 & AWS WAF',
+        plainName: 'Front Door Shield',
+        role: 'Blocks DDoS & malicious web scraping bots',
+        desc: 'Inspects web requests before they touch the bank. Stops SQL injection, credential stuffing bots, and known malicious IP addresses.',
+        latency: '0.8 ms',
+        pricing: '₹415/month rule + ₹49 per million requests'
+      },
+      {
+        id: 'apigw',
+        num: '2',
+        name: 'Amazon API Gateway',
+        plainName: 'Front Door Gate',
+        role: 'Validates cryptographic tokens and throttles traffic',
+        desc: 'Checks that requests have valid JWT tokens, enforces strict rate limits, and secures communication with TLS 1.3 encryption.',
+        latency: '3.2 ms',
+        pricing: '₹83 per million requests'
+      },
+      {
+        id: 'lambda',
+        num: '3',
+        name: 'AWS Lambda 6-Factor Engine',
+        plainName: 'Safety Brain',
+        role: 'Calculates the real-time 0-100 risk score',
+        desc: 'The core risk evaluator: analyzes amount, device, recipient history, geolocation travel speed, transfer velocity, and behavior in 18 milliseconds.',
+        latency: '18 ms',
+        pricing: '₹16 per million executions (128 MB)'
+      },
+      {
+        id: 'cognito',
+        num: '4',
+        name: 'Amazon Cognito User Pool',
+        plainName: 'Login & Verification',
+        role: 'Device fingerprinting and OTP verification',
+        desc: 'Stores trusted device fingerprints, manages secure user sessions, and triggers SMS/Aadhaar OTP challenges when elevated risk is detected.',
+        latency: '12 ms',
+        pricing: 'Free tier up to 50,000 monthly active users'
+      },
+      {
+        id: 'dynamodb',
+        num: '5',
+        name: 'Amazon DynamoDB Vault',
+        plainName: 'Bank Vault Records',
+        role: 'Tamper-resistant ledger storage',
+        desc: 'Stores transactions in an encrypted NoSQL ledger with point-in-time recovery and sub-10ms single-digit read/write performance.',
+        latency: '4.5 ms',
+        pricing: '₹103/month per 25 GB storage + Pay-per-request'
+      },
+      {
+        id: 'kms',
+        num: '6',
+        name: 'AWS KMS Key (AES-256)',
+        plainName: 'Digital Padlock & Scrambler',
+        role: 'Envelope encryption for customer balances',
+        desc: 'Scrambles sensitive bank records with customer-managed cryptographic keys (CMK) so even bank technicians cannot see raw balances.',
+        latency: '2.1 ms',
+        pricing: '₹83/month key + fraction of paisa per operation'
+      },
+      {
+        id: 'cloudwatch',
+        num: '7',
+        name: 'Amazon CloudWatch & GuardDuty',
+        plainName: '24/7 Safety Watchdog',
+        role: 'Real-time telemetry and incident alerts',
+        desc: 'Continuously monitors all bank calls, streams audit trails, and triggers instant alerts whenever an attack pattern or account takeover occurs.',
+        latency: 'Real-time',
+        pricing: '₹41 per GB ingested logs'
+      }
+    ];
+
+    let currentTab = 'sandbox';
+    let policyMode = 'dynamic_adaptive'; // 'dynamic_adaptive', 'strict_zero_trust', 'fixed_legacy'
+    let selectedAccountId = 'ACC-9041';
+    let currentInspectedCustomerId = 'ACC-9041';
+
+    let weights = {
+      amountWeight: 25,
+      deviceWeight: 20,
+      beneficiaryWeight: 20,
+      locationWeight: 15,
+      frequencyWeight: 10,
+      anomalyWeight: 10
+    };
+
+    let thresholds = {
+      allowMaxScore: 34,
+      stepUpMaxScore: 69
+    };
+
+    let formInput = {
+      amount: 45000,
+      beneficiaryName: 'Sharma Interior Works (New Contractor)',
+      beneficiaryIban: 'HDFC0001892 · 918274019283',
+      beneficiaryStatus: 'newly_added_unverified',
+      deviceTrust: 'unrecognized_device',
+      locationStatus: 'domestic_regional',
+      frequencyLevel: 'normal_1_per_hr',
+      anomalyLevel: 'normal_hygiene',
+      channel: 'Web Commercial Portal'
+    };
+
+    let ledgerTransactions = [
+      {
+        id: 'TXN-894120',
+        timestamp: '22:58:14.209',
+        accountId: 'ACC-9041',
+        accountHolder: 'Priya Sharma',
+        beneficiary: 'Tata Power Mumbai Bill',
+        amountUsd: 3200,
+        riskScore: 12,
+        decision: 'ALLOW',
+        securityNote: 'Known regular utility bill on trusted mobile device',
+        kmsKeyArn: 'arn:aws:kms:ap-south-1:492019482110:key/mrk-8841a9c0'
+      },
+      {
+        id: 'TXN-894121',
+        timestamp: '22:58:45.882',
+        accountId: 'ACC-9041',
+        accountHolder: 'Priya Sharma',
+        beneficiary: 'Global Apex Offshore Shell Holdings',
+        amountUsd: 250000,
+        riskScore: 94,
+        decision: 'BLOCKED',
+        securityNote: 'BLOCKED: Impossible travel to Frankfurt + unknown proxy tool',
+        kmsKeyArn: 'arn:aws:kms:ap-south-1:492019482110:key/mrk-8841a9c0'
+      },
+      {
+        id: 'TXN-894122',
+        timestamp: '23:01:10.142',
+        accountId: 'ACC-3108',
+        accountHolder: 'Rajesh Kumar',
+        beneficiary: 'Vendor Supplies Pvt Ltd',
+        amountUsd: 48000,
+        riskScore: 48,
+        decision: 'STEP_UP_REQUIRED',
+        securityNote: 'One-time text code verified: Unfamiliar laptop in Pune',
+        kmsKeyArn: 'arn:aws:kms:ap-south-1:492019482110:key/mrk-3108b7d9'
+      },
+      {
+        id: 'TXN-894123',
+        timestamp: '23:04:22.001',
+        accountId: 'ACC-7724',
+        accountHolder: 'Dr. Ananya Iyer',
+        beneficiary: 'Apollo Hospitals Chennai',
+        amountUsd: 14500,
+        riskScore: 18,
+        decision: 'ALLOW',
+        securityNote: 'Verified regular medical payee on Pixel 9 Pro',
+        kmsKeyArn: 'arn:aws:kms:ap-south-1:492019482110:key/mrk-7724f5e1'
+      }
+    ];
+
+    let cloudWatchLogs = [
+      {
+        id: 'CW-802194',
+        timestamp: '23:04:22.015',
+        service: 'Amazon DynamoDB',
+        logGroup: '/aws/lambda/aegis-risk-evaluator',
+        message: 'TRANSACTION COMMITTED · ID: TXN-894123 | Encrypted with AWS KMS CMK mrk-7724 | Status: ALLOWED (Score: 18/100)',
+        level: 'INFO'
+      },
+      {
+        id: 'CW-802193',
+        timestamp: '23:04:22.001',
+        service: 'AWS Lambda',
+        logGroup: '/aws/lambda/aegis-risk-evaluator',
+        message: 'Risk Evaluation Complete: Score 18/100 | Latency 17.8ms | Verified biometric hardware token present',
+        level: 'INFO'
+      },
+      {
+        id: 'CW-802192',
+        timestamp: '22:58:45.901',
+        service: 'Amazon CloudWatch',
+        logGroup: '/aws/lambda/aegis-risk-evaluator',
+        message: 'CRITICAL ALERT · Blocked high-risk transfer TXN-894121 | Impossible Travel & Unrecognized Proxy detected',
+        level: 'ERROR'
+      }
+    ];
+
+    let securityAlerts = [
+      {
+        id: 'ALT-104',
+        title: 'High-Velocity Transfer Blocked',
+        time: 'Just now',
+        severity: 'CRITICAL',
+        desc: 'Suspicious overseas transfer of ₹2,50,000 stopped immediately by Safety Brain.'
+      },
+      {
+        id: 'ALT-103',
+        title: 'Step-Up Verification Completed',
+        time: '5m ago',
+        severity: 'INFO',
+        desc: 'Customer Rajesh Kumar successfully entered one-time phone code on unfamiliar laptop.'
+      }
+    ];
+
+    let isStreamPaused = false;
+    let streamTimer = null;
+
+    /* =========================================================
+       RISK ENGINE CALCULATION
+       ========================================================= */
+    function evaluateCurrentRisk() {
+      const acc = ACCOUNTS.find(a => a.id === selectedAccountId) || ACCOUNTS[0];
+      const amount = Number(formInput.amount) || 0;
+
+      // Factor 1: Amount Ratio
+      let amountScore = 0;
+      const ratio = amount / Math.max(1, acc.avgTransactionUsd);
+      if (amount <= acc.avgTransactionUsd * 1.5) amountScore = 10;
+      else if (amount <= acc.avgTransactionUsd * 3.0) amountScore = 35;
+      else if (amount <= acc.avgTransactionUsd * 6.0) amountScore = 65;
+      else amountScore = 95;
+      if (amount > acc.dailyLimitUsd) amountScore = 99;
+
+      // Factor 2: Device
+      let deviceScore = 5;
+      if (formInput.deviceTrust === 'known_browser') deviceScore = 25;
+      else if (formInput.deviceTrust === 'unrecognized_device') deviceScore = 70;
+      else if (formInput.deviceTrust === 'emulator_tor_proxy') deviceScore = 98;
+
+      // Factor 3: Beneficiary
+      let beneficiaryScore = 10;
+      if (formInput.beneficiaryStatus === 'newly_added_unverified') beneficiaryScore = 60;
+      else if (formInput.beneficiaryStatus === 'high_risk_offshore') beneficiaryScore = 95;
+
+      // Factor 4: Location
+      let locationScore = 5;
+      if (formInput.locationStatus === 'domestic_regional') locationScore = 25;
+      else if (formInput.locationStatus === 'foreign_unannounced') locationScore = 75;
+      else if (formInput.locationStatus === 'impossible_travel_vpn') locationScore = 98;
+
+      // Factor 5: Velocity
+      let frequencyScore = 5;
+      if (formInput.frequencyLevel === 'elevated_3_per_15m') frequencyScore = 40;
+      else if (formInput.frequencyLevel === 'rapid_burst_6_per_5m') frequencyScore = 80;
+      else if (formInput.frequencyLevel === 'automated_structuring_12_per_m') frequencyScore = 98;
+
+      // Factor 6: Anomaly
+      let anomalyScore = 5;
+      if (formInput.anomalyLevel === 'off_hours_3am') anomalyScore = 45;
+      else if (formInput.anomalyLevel === 'recent_credential_reset') anomalyScore = 80;
+      else if (formInput.anomalyLevel === 'session_hijack_paste_pattern') anomalyScore = 95;
+
+      const totalW = weights.amountWeight + weights.deviceWeight + weights.beneficiaryWeight + weights.locationWeight + weights.frequencyWeight + weights.anomalyWeight || 100;
+      const weightedScore = Math.round(
+        (amountScore * weights.amountWeight +
+         deviceScore * weights.deviceWeight +
+         beneficiaryScore * weights.beneficiaryWeight +
+         locationScore * weights.locationWeight +
+         frequencyScore * weights.frequencyWeight +
+         anomalyScore * weights.anomalyWeight) / totalW
+      );
+
+      // Policy Mode rules
+      let finalDecision = 'ALLOW';
+      let title = 'Safe (Instant Approval)';
+      let reason = 'All 6 safety signals match customer\'s verified history. Payment approved instantly.';
+      let color = 'emerald';
+
+      if (policyMode === 'fixed_legacy') {
+        if (amount > acc.dailyLimitUsd) {
+          finalDecision = 'BLOCKED';
+          title = 'Exceeds Daily Transfer Cap';
+          reason = 'Amount exceeds the customer daily limit of ₹' + acc.dailyLimitUsd.toLocaleString('en-IN') + '.';
+          color = 'rose';
+        } else {
+          finalDecision = 'ALLOW';
+          title = 'Old Bank Approved (Password Matched)';
+          reason = 'Old banks approve automatically because the login password matched, ignoring device, location, or travel speed!';
+          color = 'emerald';
+        }
+      } else if (policyMode === 'strict_zero_trust') {
+        if (weightedScore <= 20) {
+          finalDecision = 'ALLOW';
+          title = 'Zero-Trust Approved';
+          reason = 'Meets ultra-strict criteria for instant approval.';
+          color = 'emerald';
+        } else if (weightedScore <= 55) {
+          finalDecision = 'STEP_UP_REQUIRED';
+          title = 'Needs 1-Time Phone Code';
+          reason = 'Strict policy requires one-time phone code for any deviation.';
+          color = 'amber';
+        } else {
+          finalDecision = 'BLOCKED';
+          title = 'Stop & Protect (High Risk)';
+          reason = 'Transfer stopped to protect customer account.';
+          color = 'rose';
+        }
+      } else {
+        // dynamic_adaptive
+        if (weightedScore <= thresholds.allowMaxScore) {
+          finalDecision = 'ALLOW';
+          title = 'Safe (Instant Approval)';
+          reason = 'All 6 safety signals match customer habits. Transfer approved without delay.';
+          color = 'emerald';
+        } else if (weightedScore <= thresholds.stepUpMaxScore) {
+          finalDecision = 'STEP_UP_REQUIRED';
+          title = 'Needs 1-Time Phone Code (Quick Check)';
+          reason = 'Unfamiliar device or higher amount detected. A quick 6-digit text code verifies it is really you.';
+          color = 'amber';
+        } else {
+          finalDecision = 'BLOCKED';
+          title = 'Stop & Protect (Scam Blocked)';
+          reason = 'Dangerous pattern detected (unrecognized device / impossible travel / high risk account). Transfer blocked.';
+          color = 'rose';
+        }
+      }
+
+      return {
+        score: weightedScore,
+        decision: finalDecision,
+        title,
+        reason,
+        color,
+        factors: [
+          { name: '1. Amount & Daily Cap', raw: amountScore, weight: weights.amountWeight },
+          { name: '2. Device Trust', raw: deviceScore, weight: weights.deviceWeight },
+          { name: '3. Recipient History', raw: beneficiaryScore, weight: weights.beneficiaryWeight },
+          { name: '4. Location & Travel Speed', raw: locationScore, weight: weights.locationWeight },
+          { name: '5. Transfer Speed', raw: frequencyScore, weight: weights.frequencyWeight },
+          { name: '6. Timing & Behavior', raw: anomalyScore, weight: weights.anomalyWeight }
+        ]
+      };
+    }
+
+    /* =========================================================
+       DOM UPDATE FUNCTIONS
+       ========================================================= */
+    function renderCustomerStrip() {
+      const acc = ACCOUNTS.find(a => a.id === selectedAccountId) || ACCOUNTS[0];
+      const selectEl = document.getElementById('customer-select');
+      selectEl.innerHTML = ACCOUNTS.map(a => `<option value="${a.id}" ${a.id === selectedAccountId ? 'selected' : ''}>${a.holderName} (${a.tier.split(' ')[0]})</option>`).join('');
+
+      const stripEl = document.getElementById('customer-card-strip');
+      stripEl.innerHTML = `
+        <div class="space-y-0.5">
+          <span class="text-slate-500 text-[11px]">Account Holder:</span>
+          <div class="font-bold text-white">${acc.holderName}</div>
+        </div>
+        <div class="space-y-0.5">
+          <span class="text-slate-500 text-[11px]">Masked Account:</span>
+          <div class="font-mono text-slate-300">${acc.accountNumberMasked}</div>
+        </div>
+        <div class="space-y-0.5">
+          <span class="text-slate-500 text-[11px]">Available Balance:</span>
+          <div class="font-bold font-mono text-emerald-400">₹${acc.balanceUsd.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="space-y-0.5">
+          <span class="text-slate-500 text-[11px]">Usual Transfer:</span>
+          <div class="font-mono text-slate-300">₹${acc.avgTransactionUsd.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="space-y-0.5">
+          <span class="text-slate-500 text-[11px]">Daily Spending Cap:</span>
+          <div class="font-mono text-amber-400">₹${acc.dailyLimitUsd.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="space-y-0.5">
+          <span class="text-slate-500 text-[11px]">Home Location:</span>
+          <div class="text-slate-300 truncate" title="${acc.homeLocation}">${acc.homeLocation}</div>
+        </div>
+      `;
+    }
+
+    function renderPresets() {
+      const container = document.getElementById('presets-container');
+      container.innerHTML = SCENARIOS.map(s => `
+        <button type="button" onclick="loadScenario('${s.id}')" class="p-2.5 rounded-lg border text-left transition-colors bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 hover:border-amber-500/60 cursor-pointer space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-white">${s.name}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 line-clamp-2">${s.desc}</p>
+        </button>
+      `).join('');
+    }
+
+    function renderRiskScore() {
+      const evalRes = evaluateCurrentRisk();
+      const circle = document.getElementById('gauge-circle');
+      const scoreEl = document.getElementById('gauge-score');
+      const titleEl = document.getElementById('decision-title');
+      const reasonEl = document.getElementById('decision-reason');
+      const ratioLabel = document.getElementById('amount-ratio-label');
+      const policyBadge = document.getElementById('policy-badge');
+      const commitBtn = document.getElementById('commit-btn');
+      const commitBtnText = document.getElementById('commit-btn-text');
+      const stepupActions = document.getElementById('stepup-actions');
+
+      scoreEl.textContent = evalRes.score;
+      circle.setAttribute('stroke-dasharray', `${evalRes.score}, 100`);
+
+      // Color mapping
+      circle.classList.remove('text-emerald-400', 'text-amber-400', 'text-rose-500');
+      titleEl.classList.remove('text-emerald-400', 'text-amber-400', 'text-rose-500');
+
+      if (evalRes.color === 'emerald') {
+        circle.classList.add('text-emerald-400');
+        titleEl.classList.add('text-emerald-400');
+        commitBtn.className = 'w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2';
+        commitBtnText.textContent = 'Approve & Encrypt into DynamoDB Vault';
+        commitBtn.disabled = false;
+        stepupActions.classList.add('hidden');
+      } else if (evalRes.color === 'amber') {
+        circle.classList.add('text-amber-400');
+        titleEl.classList.add('text-amber-400');
+        commitBtn.className = 'w-full py-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2';
+        commitBtnText.textContent = 'Trigger 1-Time Phone OTP Challenge';
+        commitBtn.disabled = false;
+        stepupActions.classList.remove('hidden');
+      } else {
+        circle.classList.add('text-rose-500');
+        titleEl.classList.add('text-rose-500');
+        commitBtn.className = 'w-full py-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2';
+        commitBtnText.textContent = 'Blocked by Safety Brain · Money Protected';
+        commitBtn.disabled = false;
+        stepupActions.classList.add('hidden');
+      }
+
+      titleEl.textContent = evalRes.title;
+      reasonEl.textContent = evalRes.reason;
+
+      // Policy mode badge
+      if (policyMode === 'fixed_legacy') {
+        policyBadge.textContent = 'OLD PASSWORD ONLY (WEAK)';
+        policyBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800/80';
+      } else if (policyMode === 'strict_zero_trust') {
+        policyBadge.textContent = 'EXTRA STRICT (ZERO TRUST)';
+        policyBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-800/80';
+      } else {
+        policyBadge.textContent = 'SMART SAFETY (DYNAMIC 6-FACTOR)';
+        policyBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80';
+      }
+
+      const acc = ACCOUNTS.find(a => a.id === selectedAccountId) || ACCOUNTS[0];
+      const ratio = (Number(formInput.amount) / Math.max(1, acc.avgTransactionUsd)).toFixed(1);
+      ratioLabel.textContent = `${ratio}x usual payment (₹${acc.avgTransactionUsd.toLocaleString('en-IN')})`;
+
+      // Factors breakdown
+      const listEl = document.getElementById('factors-breakdown-list');
+      listEl.innerHTML = evalRes.factors.map(f => `
+        <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
+          <span class="text-slate-400 font-sans">${f.name}:</span>
+          <span class="text-slate-200">
+            Signal: <strong class="${f.raw > 60 ? 'text-rose-400' : f.raw > 30 ? 'text-amber-400' : 'text-emerald-400'}">${f.raw}</strong>
+            <span class="text-slate-500">· Weight: ${f.weight}%</span>
+          </span>
+        </div>
+      `).join('');
+
+      // Update factor raw score labels
+      document.getElementById('score-badge-device').textContent = `Score: ${evalRes.factors[1].raw}/100`;
+      document.getElementById('score-badge-beneficiary').textContent = `Score: ${evalRes.factors[2].raw}/100`;
+      document.getElementById('score-badge-location').textContent = `Score: ${evalRes.factors[3].raw}/100`;
+      document.getElementById('score-badge-frequency').textContent = `Score: ${evalRes.factors[4].raw}/100`;
+      document.getElementById('score-badge-anomaly').textContent = `Score: ${evalRes.factors[5].raw}/100`;
+    }
+
+    function renderDirectoryTable(filterQuery = '') {
+      const q = (filterQuery || '').toLowerCase();
+      const filtered = ACCOUNTS.filter(a => 
+        a.holderName.toLowerCase().includes(q) ||
+        a.homeLocation.toLowerCase().includes(q) ||
+        a.accountNumberMasked.includes(q) ||
+        a.tier.toLowerCase().includes(q)
+      );
+
+      const tbody = document.getElementById('directory-table-body');
+      tbody.innerHTML = filtered.map(a => `
+        <tr class="hover:bg-slate-900/60 transition-colors">
+          <td class="py-3 px-4 font-semibold text-white">${a.holderName}</td>
+          <td class="py-3 px-4 font-mono text-slate-300">${a.accountNumberMasked}</td>
+          <td class="py-3 px-4 text-amber-400">${a.tier}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-emerald-400">₹${a.balanceUsd.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-300">₹${a.dailyLimitUsd.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-4 text-slate-400">${a.homeLocation}</td>
+          <td class="py-3 px-4 text-slate-400">${a.registeredDevice}</td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="inspectAccount('${a.id}')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-400 border border-slate-700 cursor-pointer">
+              Inspect
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderGuards() {
+      const container = document.getElementById('guards-container');
+      container.innerHTML = GUARDS.map(g => `
+        <div onclick="inspectGuard('${g.id}')" id="guard-card-${g.id}" class="guard-card p-4 rounded-xl border border-slate-800 bg-slate-950/80 hover:border-amber-500/80 transition-all cursor-pointer space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono text-amber-400 font-bold">${g.num}. ${g.name}</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </div>
+          <div class="text-sm font-bold text-white">${g.plainName}</div>
+          <p class="text-xs text-slate-400 line-clamp-2">${g.role}</p>
+          <div class="text-[11px] font-mono text-slate-500 pt-1 border-t border-slate-900">
+            Latency: <span class="text-emerald-400">${g.latency}</span>
+          </div>
+        </div>
+      `).join('');
+      inspectGuard('lambda'); // default inspection
+    }
+
+    function inspectGuard(id) {
+      const g = GUARDS.find(item => item.id === id) || GUARDS[2];
+      document.querySelectorAll('.guard-card').forEach(el => el.classList.remove('border-amber-500', 'bg-slate-900'));
+      const activeEl = document.getElementById(`guard-card-${id}`);
+      if (activeEl) {
+        activeEl.classList.add('border-amber-500', 'bg-slate-900');
+      }
+
+      document.getElementById('inspector-guard-title').textContent = `${g.num}. ${g.name} (${g.plainName})`;
+      document.getElementById('inspector-guard-role').textContent = g.role;
+      document.getElementById('inspector-guard-desc').textContent = g.desc;
+      document.getElementById('inspector-guard-latency').textContent = g.latency;
+      document.getElementById('inspector-guard-pricing').textContent = g.pricing;
+    }
+
+    let ledgerFilterMode = 'ALL';
+
+    function renderLedgerTable(searchQuery = '') {
+      const q = (searchQuery || '').toLowerCase();
+      let list = ledgerTransactions;
+
+      if (ledgerFilterMode !== 'ALL') {
+        list = list.filter(t => t.decision === ledgerFilterMode);
+      }
+
+      if (q) {
+        list = list.filter(t => 
+          t.id.toLowerCase().includes(q) ||
+          t.accountHolder.toLowerCase().includes(q) ||
+          t.beneficiary.toLowerCase().includes(q) ||
+          t.securityNote.toLowerCase().includes(q)
+        );
+      }
+
+      // KPI totals
+      document.getElementById('ledger-total-txns').textContent = ledgerTransactions.length;
+      const approvedVol = ledgerTransactions
+        .filter(t => t.decision !== 'BLOCKED')
+        .reduce((sum, t) => sum + t.amountUsd, 0);
+      const blockedVol = ledgerTransactions
+        .filter(t => t.decision === 'BLOCKED')
+        .reduce((sum, t) => sum + t.amountUsd, 0);
+
+      document.getElementById('ledger-approved-vol').textContent = '₹' + approvedVol.toLocaleString('en-IN');
+      document.getElementById('ledger-blocked-vol').textContent = '₹' + blockedVol.toLocaleString('en-IN');
+
+      const tbody = document.getElementById('ledger-table-body');
+      tbody.innerHTML = list.map(t => {
+        let badge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">APPROVED</span>';
+        if (t.decision === 'STEP_UP_REQUIRED') {
+          badge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">OTP VERIFIED</span>';
+        } else if (t.decision === 'BLOCKED') {
+          badge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800">BLOCKED</span>';
+        }
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition-colors">
+            <td class="py-3 px-4 font-semibold text-white font-mono">${t.id}</td>
+            <td class="py-3 px-4 text-slate-400">${t.timestamp}</td>
+            <td class="py-3 px-4 text-white font-sans">${t.accountHolder}</td>
+            <td class="py-3 px-4 text-slate-300 font-sans">${t.beneficiary}</td>
+            <td class="py-3 px-4 text-right font-bold text-white">₹${t.amountUsd.toLocaleString('en-IN')}</td>
+            <td class="py-3 px-4 text-center font-bold ${t.riskScore > 65 ? 'text-rose-400' : t.riskScore > 34 ? 'text-amber-400' : 'text-emerald-400'}">${t.riskScore}/100</td>
+            <td class="py-3 px-4 text-center">${badge}</td>
+            <td class="py-3 px-4 text-slate-400 font-sans text-[11px]">${t.securityNote}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderCloudWatch() {
+      const container = document.getElementById('logs-container');
+      container.innerHTML = cloudWatchLogs.map(l => `
+        <div class="p-2.5 rounded bg-slate-900/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <span class="font-bold text-amber-400">${l.service}</span>
+            <span>${l.timestamp}</span>
+          </div>
+          <div class="text-[11px] ${l.level === 'ERROR' ? 'text-rose-400 font-semibold' : 'text-slate-200'} leading-relaxed">${l.message}</div>
+        </div>
+      `).join('');
+
+      const alertsEl = document.getElementById('alerts-container');
+      alertsEl.innerHTML = securityAlerts.map(a => `
+        <div class="p-3 rounded-lg border bg-slate-950 ${a.severity === 'CRITICAL' ? 'border-rose-900/80' : 'border-slate-800'} space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs ${a.severity === 'CRITICAL' ? 'text-rose-400' : 'text-amber-400'}">${a.title}</span>
+            <span class="text-[10px] text-slate-500 font-mono">${a.time}</span>
+          </div>
+          <p class="text-xs text-slate-300">${a.desc}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderWeightSliders() {
+      const sliders = [
+        { key: 'amountWeight', label: '1. Transfer Amount & Daily Spending Limit', source: 'Spending History' },
+        { key: 'deviceWeight', label: '2. Phone, Laptop, or Browser Device Trust', source: 'Cognito Device Memory' },
+        { key: 'beneficiaryWeight', label: '3. Recipient History & Past Payment Record', source: 'Payee Directory' },
+        { key: 'locationWeight', label: '4. Geographic Location & Travel Speed', source: 'IP & Geolocation Check' },
+        { key: 'frequencyWeight', label: '5. Fast Repeated Payments in Short Time', source: 'Sliding Speed Counter' },
+        { key: 'anomalyWeight', label: '6. Time of Day & Pasted Account Numbers', source: 'Behavior Check' }
+      ];
+
+      const container = document.getElementById('weight-sliders-container');
+      container.innerHTML = sliders.map(s => {
+        const val = weights[s.key];
+        return `
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-slate-200">${s.label}</span>
+              <span class="font-mono text-amber-400 font-bold" id="slider-label-${s.key}">${val}%</span>
+            </div>
+            <input type="range" min="5" max="45" value="${val}" oninput="handleWeightSliderChange('${s.key}', this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+            <div class="text-[10px] text-slate-500">Evaluated by: ${s.source}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('slider-allow').value = thresholds.allowMaxScore;
+      document.getElementById('slider-stepup').value = thresholds.stepUpMaxScore;
+      document.getElementById('allow-threshold-val').textContent = `0 to ${thresholds.allowMaxScore}`;
+      document.getElementById('stepup-threshold-val').textContent = `${thresholds.allowMaxScore + 1} to ${thresholds.stepUpMaxScore} (${thresholds.stepUpMaxScore + 1}+ is Blocked)`;
+
+      renderPolicyRationale();
+    }
+
+    function renderPolicyRationale() {
+      const list = [
+        { name: 'Transfer Amount & Daily Spending Limit', curr: weights.amountWeight, rec: 22, text: 'Prevents medium-sized transfers from slipping through solely because the rupee amount is moderate.' },
+        { name: 'Phone, Laptop, or Browser Device Trust', curr: weights.deviceWeight, rec: 22, text: 'Verifies hardware cryptographic enclave to neutralize stolen passwords entered from stranger devices.' },
+        { name: 'Recipient History & Past Payment Record', curr: weights.beneficiaryWeight, rec: 21, text: 'Checks if recipient is an established contact or an unfamiliar foreign account.' },
+        { name: 'Geographic Location & Travel Speed', curr: weights.locationWeight, rec: 16, text: 'Catches impossible travel between distant cities and hidden proxy connections.' },
+        { name: 'Fast Repeated Payments in Short Time', curr: weights.frequencyWeight, rec: 10, text: 'Stops automated bots trying to drain funds through rapid back-to-back transfers.' },
+        { name: 'Time of Day & Pasted Account Numbers', curr: weights.anomalyWeight, rec: 9, text: 'Flags middle-of-the-night timing and transfers fired immediately after password changes.' }
+      ];
+
+      const container = document.getElementById('policy-rationale-list');
+      container.innerHTML = list.map(item => `
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-white">${item.name}</span>
+            <span class="font-mono text-amber-400">Current: ${item.curr}% &rarr; Rec: <strong>${item.rec}%</strong></span>
+          </div>
+          <p class="text-slate-400 text-[11px]">${item.text}</p>
+        </div>
+      `).join('');
+    }
+
+    /* =========================================================
+       EVENT HANDLERS & USER INTERACTIONS
+       ========================================================= */
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+      // Update Nav buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-amber-500', 'text-white', 'font-semibold');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('border-amber-500', 'text-white', 'font-semibold');
+        activeBtn.classList.remove('border-transparent', 'text-slate-400');
+      }
+
+      // Re-render specific views if needed
+      if (tabId === 'directory') renderDirectoryTable();
+      if (tabId === 'ledger') renderLedgerTable();
+      if (tabId === 'cloudwatch') renderCloudWatch();
+      if (tabId === 'advisor') renderWeightSliders();
+      if (tabId === 'architecture') renderGuards();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setPolicyMode(mode) {
+      policyMode = mode;
+      const dynBtn = document.getElementById('mode-btn-dynamic');
+      const zeroBtn = document.getElementById('mode-btn-zerotrust');
+      const fixBtn = document.getElementById('mode-btn-fixed');
+
+      dynBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-400 hover:text-slate-200';
+      zeroBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-400 hover:text-slate-200';
+      fixBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-400 hover:text-slate-200';
+
+      if (mode === 'dynamic_adaptive') {
+        dynBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md transition-colors bg-amber-500 text-slate-950';
+        showToast('🛡️ Smart Safety Active', 'Evaluating all 6 signals dynamically before allowing transfers.');
+      } else if (mode === 'strict_zero_trust') {
+        zeroBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md transition-colors bg-cyan-500 text-slate-950';
+        showToast('🔒 Extra Strict Policy Active', 'Zero-Trust mode: Requires OTP verification for nearly any deviation.');
+      } else {
+        fixBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md transition-colors bg-rose-600 text-white';
+        showToast('⚠️ Old Password Mode Active', 'Legacy mode: Ignores new devices, travel, or speed if password matches!');
+      }
+
+      renderRiskScore();
+    }
+
+    function handleSelectCustomer(accId) {
+      selectedAccountId = accId;
+      renderCustomerStrip();
+      renderRiskScore();
+    }
+
+    function handleAmountChange(val) {
+      formInput.amount = Number(val);
+      renderRiskScore();
+    }
+
+    function setQuickAmount(amt) {
+      formInput.amount = amt;
+      document.getElementById('txn-amount').value = amt;
+      renderRiskScore();
+    }
+
+    function handleBeneficiaryNameChange(val) {
+      formInput.beneficiaryName = val;
+    }
+
+    function handleBeneficiaryIbanChange(val) {
+      formInput.beneficiaryIban = val;
+    }
+
+    function setChannel(channel) {
+      formInput.channel = channel;
+      document.querySelectorAll('.chan-btn').forEach(b => {
+        b.className = 'chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-950 border-slate-800 text-slate-400 hover:text-white cursor-pointer';
+      });
+      if (channel.includes('Mobile')) document.getElementById('chan-mobile').className = 'chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-800 border-amber-500 text-white cursor-pointer';
+      if (channel.includes('UPI')) document.getElementById('chan-upi').className = 'chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-800 border-amber-500 text-white cursor-pointer';
+      if (channel.includes('Web')) document.getElementById('chan-web').className = 'chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-800 border-amber-500 text-white cursor-pointer';
+      if (channel.includes('API')) document.getElementById('chan-api').className = 'chan-btn px-2.5 py-1.5 rounded-lg border text-xs text-center font-medium bg-slate-800 border-amber-500 text-white cursor-pointer';
+    }
+
+    function handleFactorChange(factorKey, val) {
+      formInput[factorKey] = val;
+      renderRiskScore();
+    }
+
+    function loadScenario(scenId) {
+      const s = SCENARIOS.find(item => item.id === scenId);
+      if (!s) return;
+
+      formInput.amount = s.amount;
+      formInput.beneficiaryName = s.beneficiaryName;
+      formInput.beneficiaryIban = s.beneficiaryIban;
+      formInput.beneficiaryStatus = s.beneficiaryStatus;
+      formInput.deviceTrust = s.deviceTrust;
+      formInput.locationStatus = s.locationStatus;
+      formInput.frequencyLevel = s.frequencyLevel;
+      formInput.anomalyLevel = s.anomalyLevel;
+      formInput.channel = s.channel;
+
+      document.getElementById('txn-amount').value = s.amount;
+      document.getElementById('txn-beneficiary-name').value = s.beneficiaryName;
+      document.getElementById('txn-beneficiary-iban').value = s.beneficiaryIban;
+      document.getElementById('input-device-trust').value = s.deviceTrust;
+      document.getElementById('input-beneficiary-status').value = s.beneficiaryStatus;
+      document.getElementById('input-location-status').value = s.locationStatus;
+      document.getElementById('input-frequency-level').value = s.frequencyLevel;
+      document.getElementById('input-anomaly-level').value = s.anomalyLevel;
+      setChannel(s.channel);
+
+      renderRiskScore();
+      showToast('⚡ Scenario Loaded', `${s.name}: ${s.desc}`);
+    }
+
+    function resetSandboxInputs() {
+      loadScenario('SCEN-NEW-LAPTOP');
+    }
+
+    function executeCurrentTransaction(isOtpSuccess = false) {
+      const evalRes = evaluateCurrentRisk();
+      const acc = ACCOUNTS.find(a => a.id === selectedAccountId) || ACCOUNTS[0];
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const txnId = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+
+      let finalDecision = evalRes.decision;
+      if (isOtpSuccess && evalRes.decision === 'STEP_UP_REQUIRED') {
+        finalDecision = 'ALLOW';
+      }
+
+      const newTxn = {
+        id: txnId,
+        timestamp: timeStr,
+        accountId: acc.id,
+        accountHolder: acc.holderName,
+        beneficiary: formInput.beneficiaryName || 'Beneficiary Payee',
+        amountUsd: Number(formInput.amount),
+        riskScore: evalRes.score,
+        decision: finalDecision,
+        securityNote: isOtpSuccess ? 'One-time text code entered successfully' : evalRes.reason,
+        kmsKeyArn: `arn:aws:kms:ap-south-1:492019482110:key/${acc.kmsKeyId}`
+      };
+
+      ledgerTransactions.unshift(newTxn);
+
+      // CloudWatch event
+      cloudWatchLogs.unshift({
+        id: 'CW-' + Math.floor(100000 + Math.random() * 900000),
+        timestamp: timeStr,
+        service: finalDecision === 'BLOCKED' ? 'Amazon CloudWatch' : 'Amazon DynamoDB',
+        logGroup: '/aws/lambda/aegis-risk-evaluator',
+        message: `${finalDecision === 'BLOCKED' ? 'CRITICAL FRAUD STOPPED' : 'TRANSACTION COMMITTED'} · ID: ${txnId} | Score: ${evalRes.score}/100 | Amount: ₹${Number(formInput.amount).toLocaleString('en-IN')}`,
+        level: finalDecision === 'BLOCKED' ? 'ERROR' : 'INFO'
+      });
+
+      if (finalDecision === 'BLOCKED') {
+        securityAlerts.unshift({
+          id: 'ALT-' + Math.floor(100 + Math.random() * 900),
+          title: 'Dangerous Scam Stopped',
+          time: 'Just now',
+          severity: 'CRITICAL',
+          desc: `Blocked ₹${Number(formInput.amount).toLocaleString('en-IN')} transfer for ${acc.holderName}. Money protected.`
+        });
+        showToast('🛑 Transfer Blocked & Money Protected', `High risk score (${evalRes.score}/100). Scammer stopped!`);
+      } else if (evalRes.decision === 'STEP_UP_REQUIRED' && !isOtpSuccess) {
+        showToast('📱 One-Time Code Required', 'Please enter the 6-digit text code sent to your registered mobile.');
+      } else {
+        showToast('✅ Transfer Approved & Encrypted', `₹${Number(formInput.amount).toLocaleString('en-IN')} committed to DynamoDB vault.`);
+      }
+
+      renderLedgerTable();
+      renderCloudWatch();
+    }
+
+    function simulateFailedMfa() {
+      const acc = ACCOUNTS.find(a => a.id === selectedAccountId) || ACCOUNTS[0];
+      const txnId = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+      ledgerTransactions.unshift({
+        id: txnId,
+        timestamp: timeStr,
+        accountId: acc.id,
+        accountHolder: acc.holderName,
+        beneficiary: formInput.beneficiaryName || 'Beneficiary Payee',
+        amountUsd: Number(formInput.amount),
+        riskScore: 78,
+        decision: 'BLOCKED',
+        securityNote: 'Verification Failed: Incorrect 1-time text code entered 3 times',
+        kmsKeyArn: `arn:aws:kms:ap-south-1:492019482110:key/${acc.kmsKeyId}`
+      });
+
+      cloudWatchLogs.unshift({
+        id: 'CW-' + Math.floor(100000 + Math.random() * 900000),
+        timestamp: timeStr,
+        service: 'Amazon Cognito',
+        logGroup: '/aws/lambda/aegis-risk-evaluator',
+        message: `OTP CHALLENGE FAILED · Account ${acc.id} locked temporarily to protect funds`,
+        level: 'ERROR'
+      });
+
+      securityAlerts.unshift({
+        id: 'ALT-' + Math.floor(100 + Math.random() * 900),
+        title: 'Failed OTP Challenge',
+        time: 'Just now',
+        severity: 'CRITICAL',
+        desc: `Wrong OTP entered for ${acc.holderName}. Account quarantined.`
+      });
+
+      showToast('🔒 Verification Failed · Account Protected', 'Payment cancelled and account locked for security.');
+      renderLedgerTable();
+      renderCloudWatch();
+    }
+
+    /* Account modal */
+    function inspectAccount(id) {
+      const a = ACCOUNTS.find(item => item.id === id);
+      if (!a) return;
+      currentInspectedCustomerId = id;
+
+      document.getElementById('modal-acc-name').textContent = a.holderName;
+      document.getElementById('modal-acc-tier').textContent = `${a.tier} · ${a.accountNumberMasked}`;
+
+      document.getElementById('modal-acc-details').innerHTML = `
+        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-0.5">
+          <span class="text-slate-400 text-[10px]">Available Balance</span>
+          <div class="text-sm font-bold text-emerald-400">₹${a.balanceUsd.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-0.5">
+          <span class="text-slate-400 text-[10px]">Daily Spending Cap</span>
+          <div class="text-sm font-bold text-amber-400">₹${a.dailyLimitUsd.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-0.5">
+          <span class="text-slate-400 text-[10px]">Average Transfer</span>
+          <div class="text-xs text-white">₹${a.avgTransactionUsd.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-0.5">
+          <span class="text-slate-400 text-[10px]">Home Geofence</span>
+          <div class="text-xs text-white truncate">${a.homeLocation}</div>
+        </div>
+        <div class="col-span-2 p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-0.5">
+          <span class="text-slate-400 text-[10px]">Registered Hardware Device</span>
+          <div class="text-xs text-cyan-300">${a.registeredDevice}</div>
+        </div>
+        <div class="col-span-2 p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-0.5">
+          <span class="text-slate-400 text-[10px]">AWS KMS Encryption Key</span>
+          <div class="text-xs text-slate-300">${a.kmsKeyId}</div>
+        </div>
+      `;
+
+      document.getElementById('account-detail-modal').classList.remove('hidden');
+    }
+
+    function closeAccountModal() {
+      document.getElementById('account-detail-modal').classList.add('hidden');
+    }
+
+    function selectCustomerAndJump(id) {
+      closeAccountModal();
+      handleSelectCustomer(id);
+      switchTab('sandbox');
+    }
+
+    function filterDirectoryTable(val) {
+      renderDirectoryTable(val);
+    }
+
+    function setLedgerFilter(filter) {
+      ledgerFilterMode = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      });
+      if (filter === 'ALL') document.getElementById('filter-btn-all').className = 'filter-btn px-3 py-1 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 cursor-pointer';
+      if (filter === 'ALLOW') document.getElementById('filter-btn-allow').className = 'filter-btn px-3 py-1 rounded-md text-xs font-semibold bg-emerald-500 text-slate-950 cursor-pointer';
+      if (filter === 'STEP_UP_REQUIRED') document.getElementById('filter-btn-stepup').className = 'filter-btn px-3 py-1 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 cursor-pointer';
+      if (filter === 'BLOCKED') document.getElementById('filter-btn-block').className = 'filter-btn px-3 py-1 rounded-md text-xs font-semibold bg-rose-600 text-white cursor-pointer';
+      renderLedgerTable();
+    }
+
+    function filterLedgerTable(val) {
+      renderLedgerTable(val);
+    }
+
+    function toggleLogStreamPause() {
+      isStreamPaused = !isStreamPaused;
+      const btn = document.getElementById('stream-pause-btn');
+      btn.textContent = isStreamPaused ? 'Resume Stream' : 'Pause Stream';
+      document.getElementById('log-count-indicator').textContent = isStreamPaused ? 'Stream paused' : 'Stream active';
+    }
+
+    function clearCloudWatchLogs() {
+      cloudWatchLogs = [];
+      renderCloudWatch();
+    }
+
+    function handleWeightSliderChange(key, val) {
+      weights[key] = Number(val);
+      document.getElementById(`slider-label-${key}`).textContent = `${val}%`;
+      renderRiskScore();
+    }
+
+    function handleThresholdChange(type, val) {
+      if (type === 'allow') {
+        thresholds.allowMaxScore = Number(val);
+      } else {
+        thresholds.stepUpMaxScore = Number(val);
+      }
+      document.getElementById('allow-threshold-val').textContent = `0 to ${thresholds.allowMaxScore}`;
+      document.getElementById('stepup-threshold-val').textContent = `${thresholds.allowMaxScore + 1} to ${thresholds.stepUpMaxScore} (${thresholds.stepUpMaxScore + 1}+ is Blocked)`;
+      renderRiskScore();
+    }
+
+    function resetSlidersToDefault() {
+      weights = {
+        amountWeight: 25,
+        deviceWeight: 20,
+        beneficiaryWeight: 20,
+        locationWeight: 15,
+        frequencyWeight: 10,
+        anomalyWeight: 10
+      };
+      thresholds = {
+        allowMaxScore: 34,
+        stepUpMaxScore: 69
+      };
+      renderWeightSliders();
+      renderRiskScore();
+      showToast('🔄 Settings Reset', 'Risk weights and threshold boundaries reset to defaults.');
+    }
+
+    function runPolicyOptimization() {
+      weights = {
+        amountWeight: 22,
+        deviceWeight: 22,
+        beneficiaryWeight: 21,
+        locationWeight: 16,
+        frequencyWeight: 10,
+        anomalyWeight: 9
+      };
+      thresholds = {
+        allowMaxScore: 32,
+        stepUpMaxScore: 66
+      };
+      renderWeightSliders();
+      renderRiskScore();
+      showToast('⚙️ Policy Optimization Applied', 'Optimal 6-factor weight allocation configured. Catches unfamiliar devices earlier.');
+    }
+
+    /* Threat Modal */
+    function openThreatModal() {
+      const container = document.getElementById('threat-scenarios-modal-list');
+      container.innerHTML = SCENARIOS.map(s => `
+        <div class="p-4 rounded-xl border border-slate-800 bg-slate-950 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-sm text-white">${s.name}</h4>
+            <span class="text-xs px-2 py-0.5 rounded font-mono font-bold ${s.category.includes('Dangerous') ? 'bg-rose-950 text-rose-300' : 'bg-amber-950 text-amber-300'}">${s.category}</span>
+          </div>
+          <p class="text-xs text-slate-300">${s.desc}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+            <div class="p-2.5 rounded bg-rose-950/40 border border-rose-900/60 text-rose-300">
+              <strong>Old Bank (Password Only):</strong> Would lose money or fail to check device/location.
+            </div>
+            <div class="p-2.5 rounded bg-emerald-950/40 border border-emerald-900/60 text-emerald-300">
+              <strong>SafeBank Dynamic Scoring:</strong> Checks all 6 signals in 18ms and halts theft.
+            </div>
+          </div>
+          <button onclick="loadScenarioAndClose('${s.id}')" class="mt-2 w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer">
+            Load this scenario into Payment Sandbox &rarr;
+          </button>
+        </div>
+      `).join('');
+
+      document.getElementById('threat-modal').classList.remove('hidden');
+    }
+
+    function closeThreatModal() {
+      document.getElementById('threat-modal').classList.add('hidden');
+    }
+
+    function loadScenarioAndClose(id) {
+      closeThreatModal();
+      loadScenario(id);
+      switchTab('sandbox');
+    }
+
+    /* Toast Notification */
+    let toastTimeout = null;
+    function showToast(title, msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-msg').textContent = msg;
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 4000);
+    }
+
+    /* Download This Exact HTML File */
+    function downloadSelfAsHtml() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'secure-cloud-banking-system.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('📥 Project Downloaded', 'Saved secure-cloud-banking-system.html to your computer.');
+    }
+
+    /* Simulated Live Stream Interval */
+    function startLogStreamSimulation() {
+      setInterval(() => {
+        if (isStreamPaused) return;
+        const randomAcc = ACCOUNTS[Math.floor(Math.random() * ACCOUNTS.length)];
+        const services = ['Amazon Cognito', 'Amazon API Gateway', 'AWS Lambda', 'Amazon DynamoDB', 'AWS KMS'];
+        const chosenSvc = services[Math.floor(Math.random() * services.length)];
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+        let msg = `Heartbeat verification · Session healthy for ${randomAcc.holderName} (${randomAcc.id})`;
+        if (chosenSvc === 'AWS KMS') msg = `KMS CMK Decrypt · Ciphertext verified with envelope key ${randomAcc.kmsKeyId}`;
+        if (chosenSvc === 'Amazon API Gateway') msg = `REST API request 200 OK · Route /v1/payments · IP 106.51.78.214 in Mumbai`;
+        if (chosenSvc === 'AWS Lambda') msg = `Cold start 0ms · Execution duration 17.6ms · Memory used 68 MB`;
+
+        cloudWatchLogs.unshift({
+          id: 'CW-' + Math.floor(100000 + Math.random() * 900000),
+          timestamp: timeStr,
+          service: chosenSvc,
+          logGroup: '/aws/lambda/aegis-risk-evaluator',
+          message: msg,
+          level: 'INFO'
+        });
+
+        if (cloudWatchLogs.length > 50) cloudWatchLogs.pop();
+        if (currentTab === 'cloudwatch') renderCloudWatch();
+      }, 3500);
+    }
+
+    /* =========================================================
+       INITIALIZATION
+       ========================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCustomerStrip();
+      renderPresets();
+      loadScenario('SCEN-NEW-LAPTOP');
+      renderDirectoryTable();
+      renderGuards();
+      renderLedgerTable();
+      renderCloudWatch();
+      renderWeightSliders();
+      startLogStreamSimulation();
+    });
+  </script>
+</body>
+</html>

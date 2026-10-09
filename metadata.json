@@ -1,0 +1,8 @@
+{
+  "name": "Remix Secure Cloud-based Banking System With Dynamic Transaction Risk Scoring ",
+  "description": "A secure banking solution that analyzes transactions in real time, assigns risk scores based on user activity and transaction patterns, and detects suspicious activities while protecting sensitive financial data.\n",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
